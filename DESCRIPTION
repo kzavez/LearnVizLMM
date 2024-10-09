@@ -1,0 +1,34 @@
+Package: LearnVizLMM
+Title: Learning and Communicating Linear Mixed Models Without Data
+Version: 1.0.0
+Authors@R: c(
+    person(given = "Katherine", family = "Zavez", 
+    email = "Katherine.Zavez@uconn.edu", role = c("aut", "cre")),
+    person(given = "Ofer", family = "Harel", 
+    email = "Ofer.Harel@uconn.edu", role = "aut"))
+Description: Summarizes characteristics of linear mixed effects models without 
+    data or a fitted model by converting code for fitting lmer() from 'lme4' 
+    and lme() from 'nlme' into tables, equations, and visuals. Outputs can be 
+    used to learn how to fit linear mixed effects models in 'R' and to 
+    communicate about these models in presentations, manuscripts, and analysis 
+    plans. 
+URL: https://github.com/kzavez/LearnVizLMM
+BugReports: https://github.com/kzavez/LearnVizLMM/issues
+License: GPL (>= 3)
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.2
+Imports: 
+    cli,
+    DiagrammeR,
+    DiagrammeRsvg,
+    dplyr,
+    rsvg,
+    stringr
+Suggests: 
+    kableExtra,
+    knitr,
+    rmarkdown,
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
+VignetteBuilder: knitr
