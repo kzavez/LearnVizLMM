@@ -1,0 +1,430 @@
+---
+title: "Introduction to LearnVizLMM"
+output:
+  rmarkdown::html_vignette:
+    toc: true
+    toc_depth: 2
+vignette: >
+  %\VignetteIndexEntry{Introduction to LearnVizLMM}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = ""
+)
+```
+
+
+## Introduction
+
+The objective of this package is to summarize characteristics of linear mixed effects models (LMMs) without data or a fitted model. Its functions convert code for fitting `nlme::lme()` and `lme4::lmer()` models into tables, equations, and visuals. These outputs can be used for learning how to fit LMMs in R and communicating about LMMs in presentations, manuscripts, and analysis plans.
+
+```{r pkgInfo, echo=FALSE, fig.width=6, fig.align='right'}
+library(LearnVizLMM)
+diagram_text <- "\n  digraph {\n    graph [layout = dot, rankdir = LR]\n    edge [color=black]\n    node[shape=box]\n    label1[label = \"Input\", color=white, fontname = \"times-bold\", height = 0.25]\n    label1b[label = \"model \n cat_vars \n cat_vars_nlevels\", fontsize=10, style = dashed, width = 1.15]\n    label1a[label = \"model \n--- OR ---\n n_gf \n gf_description \n gf_names\", fontsize=10, style = dashed, width = 1.15]\n    label2[label = \"Function\", color=white, fontname = \"times-bold\", height = 0.25]\n    H[label = \"extract_equation()\", style = filled, width = 1.5]\n    F[label = \"extract_variables()\", style = filled, width = 1.5]\n    B[label = \"extract_structure()\", style = filled, width = 1.5]\n    label3[label = \"Output\", color=white, fontname = \"times-bold\", height = 0.25]\n    I[label = \"LaTeX model equation\", color=white, fontsize=10, width = 1.5]\n    G[label = \"Data frame of the model \nvariables and descriptions\", color=white, fontsize=10, width = 1.5]\n    C[label = \"Image of the multilevel \ndata structure\", color=white, fontsize=10, width = 1.5]\n    edge [color=white, arrowsize = 1]\n    rank=same {label1 -> label1b -> label1a}\n    label1 -> label2\n    label2 -> label3\n    rank=same {label2 -> H -> F -> B}\n    rank=same {label3 -> I -> G -> C}\n    edge [color=black, arrowsize = 1]\n    label1a -> B\n    label1b -> {F H}\n    edge [minlen=1]\n    B -> C\n    F -> G\n    H -> I\n  }\n   "
+DiagrammeR::grViz(diagram_text)
+```
+
+
+
+### Why without data?
+
+* To expand the types of examples used in statistics education.
+* To inform study design (e.g., model and variable selection prior to data collection or model fitting).
+
+
+
+### Installation
+
+To install this package, you can use CRAN (the central R package repository).
+
+```{r setup, eval=FALSE}
+library(LearnVizLMM)
+```
+
+
+### Background
+
+In many settings, multiple samples are collected from the same individual or group (e.g., achievement scores of students from different schools and classrooms within schools; impact of different diets on the weights of individuals sampled once a month for six months). This type of data is often referred to as multilevel and can be analyzed using LMMs. LMMs can be fit in R using the following packages and functions.
+
+```{r lmmPkgs1, eval=FALSE}
+library(lme4)
+lme4::lmer(formula = outcome ~ fixed_effects + random_effects)
+
+library(nlme)
+nlme::lme(fixed = outcome ~ fixed_effects, random = random_effects)
+```
+
+
+The **outcome** and **fixed effects** are similar to that of a linear model.
+
+```{r lmmPkgs2, eval=FALSE}
+lmer(formula = Y ~ 1 + X1 + X2 + random_effects)
+lme(fixed = Y ~ 1 + X1 + X2, random = random_effects)
+```
+
+
+The **random effects** are specified with respect to groups or grouping factors (GFs), which are factor variables under which observations are nested or grouped. Using different notations, users can specify random intercepts, random slopes, and more to be estimated by the model.
+
+
+```{r lmmPkgs3, eval=FALSE}
+# Random Intercept
+lmer(formula = outcome ~ fixed_effects + (1|GF))
+lme(fixed = outcome ~ fixed_effects, random = ~1|GF)
+lme(fixed = outcome ~ fixed_effects, random = list(GF=~1))
+# Random Intercept & Slope
+lmer(formula = outcome ~ fixed_effects + (1 + X1|GF))
+lme(fixed = outcome ~ fixed_effects, random = ~1 + X1|GF)
+lme(fixed = outcome ~ fixed_effects, random = list(GF=~1 + X1))
+```
+
+
+
+
+## extract_equation()
+
+`extract_equation()` returns a 'LaTeX' model equation. This function has three output options.
+
+
+### output_type = "latex" (default)
+
+```{r equation1a, eval=FALSE}
+extract_equation(model = "lmer(score ~ 1 + age + (1|subject))")
+```
+
+
+```{r equation1b, eval=TRUE, echo=FALSE}
+extract_equation(model = "lmer(score ~ 1 + age + (1|subject))")
+```
+
+
+
+#### What do I do with this output? 
+
+To see the equation, copy and paste the output into any file that supports 'LaTeX' equations. Below is an example of what will happen if you paste the output from above into 'R Markdown'. 
+
+
+$$
+\begin{aligned}
+  \operatorname{score}_{ij} &= \beta_{0} + \beta_{1}(\operatorname{age}) \\
+  &+ u_{0i} \\
+ &+ \epsilon_{ij} \\
+ u_{0i} &\sim N \left(0, \tau^2_{u_{0}} \right), \text{ for subject i = 1,} \dots \text{,a} \\
+ \epsilon_{ij} &\sim N \left(0, \sigma^2 \right), \text{ for Observation j = 1,} \dots \text{,n}  
+\end{aligned}
+$$
+
+
+
+### output_type = "string"
+
+
+```{r equation2a, eval=FALSE}
+extract_equation(model = "lmer(score ~ 1 + age + (1|subject))",
+                 output_type = "string")
+```
+
+
+```{r equation2b, eval=TRUE, echo=FALSE}
+extract_equation(model = "lmer(score ~ 1 + age + (1|subject))",
+                 output_type = "string")
+```
+
+
+
+
+
+
+### output_type = "none"
+
+```{r equation3a, eval=FALSE}
+extract_equation(model = "lmer(score ~ 1 + age + (1|subject))",
+                 output_type = "none")
+```
+
+
+```{r equation3b, eval=TRUE, echo=FALSE}
+extract_equation(model = "lmer(score ~ 1 + age + (1|subject))",
+                 output_type = "none")
+```
+
+
+
+
+
+
+
+## extract_variables()
+
+`extract_variables()` returns a data frame with information on the variables in the model. The columns of the data frame include: 
+
+* `Effect` - whether the effect is random or fixed 
+* `Group` - group or grouping factor associated with random effects
+* `Term` - notation used to include the variable in the model
+* `Description` - description of the `Term`
+* `Parameter` - parameter estimated when the model is fit
+
+**Note:** The data frames for the examples below are displayed using `kbl()` from the kableExtra package. Below are examples of how this function works for different models.
+
+
+### One Group, Random Intercept and Slopes
+
+By default, all predictor variables are assumed to be numeric.
+
+```{r table1a, eval=FALSE}
+extract_variables(model = "lme(weight~1+sex+time+I(time^2), random=~1+time+I(time^2)|ID)")
+```
+
+
+```{r table1b, eval=TRUE, echo=FALSE, warning=FALSE}
+library(kableExtra)
+extract_variables(model = "lme(weight~1+sex+time+I(time^2), random=~1+time+I(time^2)|ID)") %>%
+  kbl() %>%
+  kable_styling()
+```
+
+
+
+
+
+### Two Groups, Random Intercepts and Slope
+
+To include one or more categorical predictors, use `cat_vars` and `cat_vars_nlevels`. In addition, fixed and random intercepts are added to the data frame unless explicitly excluded (e.g., "age-1" and "0+age").
+
+```{r table2a, eval=FALSE}
+extract_variables(model = "lme(Score~type+age*sex,random=list(School=pdDiag(~type),Class=~1))",
+                  cat_vars = c("type", "sex"),
+                  cat_vars_nlevels = c(3, 2))
+```
+
+
+```{r table2b, eval=TRUE, echo=FALSE, warning=FALSE}
+extract_variables(model = "lme(Score~type+age*sex,random=list(School=pdDiag(~type),Class=~1))",
+                  cat_vars = c("type", "sex"),
+                  cat_vars_nlevels = c(3, 2)) %>%
+  kbl() %>%
+  kable_styling()
+```
+
+
+
+
+
+
+
+## extract_structure()
+
+
+There are two ways to run `extract_structure()` to get an image of the multilevel data structure. 
+
+1. Use the model input, which contains `lme()` or `lmer()` code.
+2. Specify the number, description, and names of the groups or grouping factors of interest.
+
+Below are examples of both approaches for one, two, and three groups.
+
+
+### One group
+
+```{r structure1, fig.width=7}
+extract_structure(n_gf = 1, 
+                  gf_names = "Subject")
+```
+
+
+To specify the number of Subjects, use `gf_nlevels`.
+
+```{r structure1b, fig.width=7}
+extract_structure(model = "lme(Weight ~ Time, random=~Time|Subject, data)",
+                  gf_nlevels = 47)
+```
+
+
+To remove the labels for the levels on the left side of the image, use `label_levels`.
+
+```{r structure1c, fig.width=7}
+extract_structure(model = "lme(Weight ~ Time, random=~Time|Subject, data)",
+                  gf_nlevels = "m", 
+                  label_levels = "no")
+```
+
+
+
+### Two groups
+
+When there are two groups, they can either be **crossed** (e.g., every level of Worker is observed for every level of Machine)
+
+```{r structure2cross, fig.width=7}
+extract_structure(model = "lmer(Strength ~ 1 + (1|Machine) + (1|Worker))",
+                  gf_nlevels = c(10, 20))
+```
+
+
+or **nested** (e.g., class is nested within school).
+
+```{r structure2nest, fig.width=7}
+extract_structure(model = "lme(score~type, random=list(school=pdDiag(~1+type),class=~1))")
+```
+
+
+These figures can also be created using the following code.
+
+```{r structure2alt, eval=FALSE}
+extract_structure(n_gf = 2, 
+                  gf_description = "crossed",
+                  gf_names = c("Machine", "Worker"),
+                  gf_nlevels = c(10, 20))
+
+extract_structure(n_gf = 2, 
+                  gf_description = "nested",
+                  gf_names = c("school", "class"))
+```
+
+
+
+### Three groups
+
+
+When there are three groups, they can also be **crossed** or **nested**. 
+
+```{r structure3, fig.width=7}
+extract_structure(n_gf = 3,
+                  gf_description = "crossed",
+                  gf_names = c("District", "School", "Class"),
+                  gf_nlevels = c(8, 15, 5))
+```
+
+
+The index used for the highest-level group or the group that entered the `model` or `gf_names` first can be left as `"i"` (see above) or redefined using `gf3_index`.
+
+```{r structure3b, fig.width=7}
+extract_structure(n_gf = 3,
+                  gf_description = "nested",
+                  gf_names = c("District", "School", "Class"),
+                  gf_nlevels = c(8, 15, 5),
+                  gf3_index = "q")
+```
+
+
+There may also be a combination of nested and crossed groups. For example, one group may be crossed with two nested groups (i.e. **crossed with nested**).
+
+```{r structure3c, fig.width=7}
+extract_structure(n_gf = 3,
+                  gf_description = "crossed with nested",
+                  gf_names = c("GF1", "GF2", "GF3"))
+```
+
+
+Another example is when two crossed groups are nested within another group (i.e. **crossed within nested**).
+
+```{r structure3d, fig.width=7}
+extract_structure(n_gf = 3,
+                  gf_description = "crossed within nested",
+                  gf_names = c("GF1", "GF2", "GF3"))
+```
+
+
+
+### Export Type
+
+
+If you wish to edit the output beyond what is offered by `extract_structure()`, set `export_type` = `"text"`. After editing the text, the figure can be created using `grViz()` in the DiagrammeR package.
+
+```{r structureExport, fig.width=7}
+diagram_text <- extract_structure(n_gf = 1, 
+                                  gf_names = "Subject",
+                                  export_type = "text")
+
+DiagrammeR::grViz(diagram_text)
+```
+
+
+
+## Scope \& Tips
+
+The current version of this package does not work for all possible `lme()` or `lmer()` models. However, its functions do work for:
+
+* One, two, or three groups
+
+```{r scope1, eval=FALSE}
+# One
+(1|GF)
+random=~1|GF
+random=list(GF=~1)
+# Two
+(1|GF1)+(1|GF2)
+(1|GF1/GF2)
+random=~1|GF1/GF2
+# Three
+(1|GF1/GF2/GF3)
+(1|GF1)+(1|GF2/GF3)
+random=list(GF1=~1,GF2=~1,GF3=~1)
+```
+
+
+* One to four random effects per group
+
+```{r scope2, eval=FALSE}
+# One
+(1|GF)
+# Two
+(1+X1|GF)
+(X1|GF)
+# Three
+(1+X1+X2|GF)
+(X1+X2|GF)
+# Four
+(1+X1+X2+X3|GF)
+(X1+X2+X3|GF)
+```
+
+
+* Two- and three-way interactions written using the `"*"` notation
+
+```{r scope3, eval=FALSE}
+# Two-way
+X1 + X2 + X1:X2
+X1*X2
+# Three-way
+X1 + X2 + X3 + X1:X2 + X1:X3 + X2:X3 + X1:X2:X3
+X1*X2*X3
+# Four-way
+X1 + X2 + X3 + X3 + X1:X2 + X1:X3 + X1:X4 + X2:X3 + X2:X4 + 
+  X1:X2:X3 + X1:X2:X4 + X1:X4:X3 + X4:X2:X3 + X1:X2:X3:X4
+X1*X2*X3*X4 # does not work
+```
+
+
+* Interactions between two and three categorical variables
+
+
+**Here are some additional tips for using this package:**
+
+* If the `model` input is code for fitting a `lmer()` model, only the first input is used and it is assumed to be the `formula` input. While other information can be included, it will be ignored.
+
+```{r tips1, eval=FALSE}
+# works
+model = "lmer(formula = outcome ~ fixed_effects + random_effects)"
+model = "lmer(outcome ~ fixed_effects + random_effects)"
+model = "lmer(outcome ~ fixed_effects + random_effects, data, ...)"
+# does not work
+model = "lmer(data, formula = outcome ~ fixed_effects + random_effects)"
+model = "lmer(data, outcome ~ fixed_effects + random_effects)"
+```
+
+
+* If the `model` input is code for fitting a `lme()` model, only the `fixed` and `random` inputs are used. The `fixed` input is assumed to be the first input and the `random` input must include `random =`. Other information can be included, but it will be ignored.
+
+
+```{r tips2, eval=FALSE}
+# works
+model = "lme(fixed = outcome ~ fixed_effects, random = random_effects, data, ...)"
+model = "lme(outcome ~ fixed_effects, random = random_effects)"
+# does not work
+model = "lme(outcome ~ fixed_effects, random_effects, data, ...)"
+model = "lme(random = random_effects, fixed = outcome ~ fixed_effects)"
+```
+
+
